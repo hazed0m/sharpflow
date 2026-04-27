@@ -1,0 +1,16 @@
+import { AuthGate } from './features/auth/AuthGate'
+import { FocusScreen } from './features/focus/FocusScreen'
+import { MemoryBox } from './features/memory/MemoryBox'
+
+function App() {
+  return (
+    <AuthGate>
+      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+        <FocusScreen />
+        <MemoryBox />
+      </div>
+    </AuthGate>
+  )
+}
+
+export default App
