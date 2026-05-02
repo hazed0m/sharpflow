@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { normalizeTaskText, validateActionableTask } from '../services/taskRules'
 
@@ -10,6 +10,14 @@ interface TaskInputProps {
 export function TaskInput({ onSubmit, disabled }: TaskInputProps) {
   const [value, setValue] = useState('')
   const [feedback, setFeedback] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const resizeTextarea = () => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    textarea.style.height = '0px'
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -23,26 +31,35 @@ export function TaskInput({ onSubmit, disabled }: TaskInputProps) {
     onSubmit(cleaned)
     setValue('')
     setFeedback('Task added. Keep the wording tight and immediate.')
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+    }
   }
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
-      <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-4 shadow-inner shadow-black/10">
+      <div className="rounded-3xl border border-slate-200/20 bg-white/95 p-4 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-950/90 dark:ring-white/10">
         <label htmlFor="task-input" className="block text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
           Next actionable step
         </label>
         <textarea
           id="task-input"
-          rows={3}
+          ref={textareaRef}
+          rows={1}
           value={value}
           disabled={disabled}
-          onChange={(event) => setValue(event.target.value)}
-          placeholder="Example: write the first 3 sentences of the project email"
-          className="mt-3 min-h-[112px] w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-amber-400/70 focus:ring-2 focus:ring-amber-400/10"
+          onChange={(event) => {
+            setValue(event.target.value)
+            resizeTextarea()
+          }}
+          placeholder="Example: open the project file and review the first section"
+          className="mt-3 min-h-[100px] w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 ease-in-out focus:border-amber-400/70 focus:ring-2 focus:ring-amber-400/10"
         />
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="min-h-[1.5rem] text-sm text-slate-400">{feedback || 'No vague notes — only one clear next step.'}</p>
+        <p className="min-h-[1.5rem] text-sm text-slate-400">
+          {feedback || 'Keep it simple and start with the very next thing you can do.'}
+        </p>
         <button
           type="submit"
           disabled={disabled}

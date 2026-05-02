@@ -54,11 +54,11 @@ export function FocusScreen() {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/90 p-6 shadow-2xl shadow-black/30 ring-1 ring-white/10 sm:p-8">
+    <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/20 bg-white/95 p-6 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-950/90 dark:ring-white/10 sm:p-8">
       <AshAnimation visible={burning} />
       <div className="grid gap-6 lg:grid-cols-[1.35fr_0.95fr]">
         <div className="space-y-6">
-          <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-6 shadow-xl shadow-black/20 sm:p-8">
+          <div className="rounded-3xl border border-slate-200/20 bg-slate-50/90 p-6 shadow-xl ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-slate-500">SharpFlow focus</p>
@@ -77,7 +77,7 @@ export function FocusScreen() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-[2rem] border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950/80 p-6 shadow-2xl shadow-black/30 ring-1 ring-white/5">
+          <div className="rounded-[2rem] border border-slate-200/20 bg-slate-50/90 p-6 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 dark:ring-white/5">
             {activeTask ? (
               <>
                 <div className="flex items-center justify-between gap-4">

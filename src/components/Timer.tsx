@@ -38,7 +38,7 @@ export function Timer({ durationMinutes, onComplete, onTick, active, resetKey }:
   const seconds = remaining % 60
 
   return (
-    <div className="flex items-center justify-center rounded-3xl bg-slate-900/90 px-4 py-5 text-center shadow-lg shadow-black/20 ring-1 ring-white/10">
+    <div className="flex items-center justify-center rounded-3xl bg-white/95 px-4 py-5 text-center shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:bg-slate-900/90 dark:ring-white/10">
       <div>
         <p className="text-sm uppercase tracking-[0.35em] text-slate-400">Focus timer</p>
         <p className="mt-3 text-5xl font-semibold text-white sm:text-6xl">

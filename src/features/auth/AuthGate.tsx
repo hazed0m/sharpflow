@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { supabase, getCurrentSession, onAuthStateChange, signInWithEmail, signInWithGoogle, signOut } from '../../services/supabase'
 import { useHasMounted } from '../../hooks/useHasMounted'
 import { useSharpFlowStore } from '../../store/useSharpFlowStore'
+import { ThemeToggle } from '../../components/ThemeToggle'
 
 interface AuthGateProps {
   children: ReactNode
@@ -92,10 +93,15 @@ export function AuthGate({ children }: AuthGateProps) {
 
   if (!userEmail && supabase && !isGuestMode) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-slate-900/90 p-8 shadow-2xl shadow-black/30 ring-1 ring-white/10">
-          <h1 className="text-3xl font-semibold text-white">Sign in to SharpFlow</h1>
-          <p className="mt-3 text-slate-400">Use secure email sign-in or Google sign-in. Your task progress is private and lightweight.</p>
+      <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-100">
+        <div className="mx-auto max-w-3xl rounded-[2rem] border border-slate-200/20 bg-white/95 p-8 shadow-glow ring-1 ring-slate-200/30 dark:border-white/10 dark:bg-slate-900/90">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold text-slate-950 dark:text-white">Sign in to SharpFlow</h1>
+              <p className="mt-3 text-slate-600 dark:text-slate-400">Use secure email sign-in or Google sign-in. Your task progress is private and lightweight.</p>
+            </div>
+            <ThemeToggle />
+          </div>
           <form className="mt-8 grid gap-4" onSubmit={handleEmailSignIn}>
             <label className="block text-sm font-semibold text-slate-300" htmlFor="email-signin">
               Email address
@@ -135,27 +141,32 @@ export function AuthGate({ children }: AuthGateProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 rounded-[2rem] border border-white/10 bg-slate-900/90 p-6 shadow-2xl shadow-black/30 ring-1 ring-white/10 sm:p-8">
+    <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-100">
+      <div className="mb-6 flex flex-col gap-3 rounded-[2rem] border border-slate-200/20 bg-white/95 p-4 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 dark:ring-white/10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm text-slate-600 dark:text-slate-400">
+          {userEmail ? `Signed in as ${userEmail}` : 'Guest mode active'}
+        </div>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          {supabase ? (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="rounded-3xl bg-slate-800 px-4 py-2 text-sm text-white transition hover:bg-slate-700"
+            >
+              Sign out
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <header className="mb-8 rounded-[2rem] border border-slate-200/20 bg-white/95 p-6 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-amber-300/80">SharpFlow</p>
-            <h1 className="mt-2 text-3xl font-semibold text-white">Train your attention without a dashboard.</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
+            <p className="text-xs uppercase tracking-[0.35em] text-amber-500/80">SharpFlow</p>
+            <h1 className="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">Train your attention without a dashboard.</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-400">
               Focus on the next immediate step with urgency, clarity, and the smallest meaningful queue.
             </p>
-          </div>
-          <div className="flex flex-col gap-2 rounded-3xl bg-slate-950/80 p-4 text-sm text-slate-300 shadow-inner shadow-black/20">
-            <span>{userEmail ? `Signed in as ${userEmail}` : 'Guest mode active'}</span>
-            {supabase ? (
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="rounded-3xl bg-slate-800 px-4 py-2 text-sm text-white transition hover:bg-slate-700"
-              >
-                Sign out
-              </button>
-            ) : null}
           </div>
         </div>
       </header>

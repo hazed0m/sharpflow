@@ -21,7 +21,7 @@ export function CharacterIllustration({ mood, message }: CharacterIllustrationPr
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="rounded-3xl border border-white/10 bg-slate-900/80 p-5 shadow-xl shadow-black/20"
+      className="rounded-3xl border border-slate-200/20 bg-white/95 p-5 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/10"
     >
       <div className={`mb-4 inline-flex items-center gap-3 rounded-3xl bg-gradient-to-r ${moodState.color} px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-black/20`}>
         <span className="text-2xl">{moodState.expression}</span>

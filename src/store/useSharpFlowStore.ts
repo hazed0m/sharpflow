@@ -16,6 +16,7 @@ interface SharpFlowState {
   mood: CharacterMood
   prompt: string
   activeTaskId: string | null
+  selectedModuleId: string
   userId: string | null
   initializeUser: (userId: string | null) => Promise<void>
   addTask: (title: string) => void
@@ -26,9 +27,10 @@ interface SharpFlowState {
   addMemory: (text: string, type: MemoryEntry['type']) => void
   setMood: (mood: CharacterMood) => void
   setPrompt: (prompt: string) => void
+  setSelectedModule: (moduleId: string) => void
 }
 
-const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt'>> => {
+const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt' | 'setSelectedModule'>> => {
   if (typeof window === 'undefined') {
     return {
       tasks: [],
@@ -37,6 +39,7 @@ const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initia
       mood: 'calm',
       prompt: 'Start with one focused task that feels clear.',
       activeTaskId: null,
+      selectedModuleId: 'classic',
       userId: null,
     }
   }
@@ -50,14 +53,16 @@ const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initia
       mood: 'calm',
       prompt: 'Start with one focused task that feels clear.',
       activeTaskId: null,
+      selectedModuleId: 'classic',
       userId: null,
     }
   }
 
   try {
-    const parsed = JSON.parse(saved) as Omit<SharpFlowState, 'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt'>
+    const parsed = JSON.parse(saved) as Omit<SharpFlowState, 'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt' | 'setSelectedModule'>
     return {
       ...parsed,
+      selectedModuleId: (parsed as { selectedModuleId?: string }).selectedModuleId ?? 'classic',
       userId: null,
     }
   } catch {
@@ -68,12 +73,13 @@ const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initia
       mood: 'calm',
       prompt: 'Start with one focused task that feels clear.',
       activeTaskId: null,
+      selectedModuleId: 'classic',
       userId: null,
     }
   }
 }
 
-function saveState(state: Omit<SharpFlowState, 'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt' | 'userId'>) {
+function saveState(state: Omit<SharpFlowState, 'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt' | 'setSelectedModule' | 'userId'>) {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
 }
@@ -82,8 +88,8 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
   const baseState = hydrateState()
 
   const save = () => {
-    const { tasks, memories, ash, mood, prompt, activeTaskId } = get()
-    saveState({ tasks, memories, ash, mood, prompt, activeTaskId })
+    const { tasks, memories, ash, mood, prompt, activeTaskId, selectedModuleId } = get()
+    saveState({ tasks, memories, ash, mood, prompt, activeTaskId, selectedModuleId })
   }
 
   return {
@@ -103,22 +109,22 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
         return
       }
 
-      const remoteTasks = (tasksResult.data ?? []).map((item: any) => ({
-        id: item.id,
-        title: item.title,
+      const remoteTasks = (tasksResult.data ?? []).map((item: Record<string, unknown>) => ({
+        id: item.id as string,
+        title: item.title as string,
         status: item.status as TaskItem['status'],
-        createdAt: new Date(item.created_at).getTime(),
-        timerMinutes: item.timer_minutes,
-        extensions: item.extensions,
-        userId: item.user_id,
+        createdAt: new Date(item.created_at as string).getTime(),
+        timerMinutes: item.timer_minutes as number,
+        extensions: item.extensions as number,
+        userId: item.user_id as string,
       }))
 
-      const remoteMemories = (memoriesResult.data ?? []).map((item: any) => ({
-        id: item.id,
-        text: item.text,
+      const remoteMemories = (memoriesResult.data ?? []).map((item: Record<string, unknown>) => ({
+        id: item.id as string,
+        text: item.text as string,
         type: item.type as MemoryEntry['type'],
-        createdAt: new Date(item.created_at).getTime(),
-        userId: item.user_id,
+        createdAt: new Date(item.created_at as string).getTime(),
+        userId: item.user_id as string,
       }))
 
       if (remoteTasks.length > 0) {
@@ -283,6 +289,18 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
     },
     setPrompt(prompt) {
       set(() => ({ prompt }))
+      save()
+    },
+    setSelectedModule(moduleId) {
+      const modulePrompt = moduleId === 'quick-start'
+        ? 'Choose a task you can begin in the next minute.'
+        : moduleId === 'recovery'
+        ? 'Focus on the smallest next step and keep the pressure kind.'
+        : 'Start with one focused task that feels clear.'
+
+      const mood: CharacterMood = moduleId === 'quick-start' ? 'focused' : moduleId === 'recovery' ? 'cheerful' : 'calm'
+
+      set(() => ({ selectedModuleId: moduleId, prompt: modulePrompt, mood }))
       save()
     },
   }
