@@ -143,9 +143,9 @@ export function AuthGate({ children }: AuthGateProps) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-100">
       {isOfflineMode ? (
-        <div className="mx-auto max-w-6xl rounded-[2rem] border border-amber-300/20 bg-amber-400/10 p-4 text-sm text-amber-500 shadow-lg shadow-amber-300/10 mb-6">
+        <div className="mx-auto max-w-6xl rounded-[2rem] border border-amber-300/20 bg-amber-700/10 p-4 text-sm text-amber-100 shadow-lg shadow-amber-300/10 mb-6">
           <p className="font-medium">Offline mode enabled</p>
-          <p className="mt-1 text-slate-500">Supabase is not configured, so your progress is saved locally in the browser for prototyping.</p>
+          <p className="mt-1 text-slate-300">Supabase is not configured, so your progress is saved locally in the browser for prototyping.</p>
         </div>
       ) : null}
       <div className="mx-auto max-w-6xl mb-6 flex flex-col gap-3 rounded-[2rem] border border-slate-200/20 bg-white/95 p-4 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 dark:ring-white/10 sm:flex-row sm:items-center sm:justify-between">
