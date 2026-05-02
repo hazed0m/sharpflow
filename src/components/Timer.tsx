@@ -40,11 +40,11 @@ export function Timer({ durationMinutes, onComplete, onTick, active, resetKey }:
   return (
     <div className="flex items-center justify-center rounded-3xl bg-white/95 px-4 py-5 text-center shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:bg-slate-900/90 dark:ring-white/10">
       <div>
-        <p className="text-sm uppercase tracking-[0.35em] text-slate-400">Focus timer</p>
-        <p className="mt-3 text-5xl font-semibold text-white sm:text-6xl">
+        <p className="text-sm uppercase tracking-[0.35em] text-slate-600 dark:text-slate-400">Focus timer</p>
+        <p className="mt-3 text-5xl font-semibold text-slate-900 dark:text-white sm:text-6xl">
           {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
         </p>
-        <p className="mt-2 text-xs uppercase tracking-[0.32em] text-amber-300/80">Keep your rhythm</p>
+        <p className="mt-2 text-xs uppercase tracking-[0.32em] text-amber-700 dark:text-amber-300/80">Keep your rhythm</p>
       </div>
     </div>
   )

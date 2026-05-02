@@ -61,14 +61,14 @@ export function FocusScreen() {
           <div className="rounded-3xl border border-slate-200/20 bg-slate-50/90 p-6 shadow-xl ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-slate-500">SharpFlow focus</p>
-                <h1 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">One task. One timer. One flow.</h1>
+                <p className="text-xs uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">SharpFlow focus</p>
+                <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white sm:text-4xl">One task. One timer. One flow.</h1>
               </div>
-              <div className="rounded-3xl bg-slate-800/80 px-4 py-2 text-sm text-amber-300 shadow-inner shadow-black/10">
+              <div className="rounded-3xl bg-slate-200 px-4 py-2 text-sm text-amber-700 shadow-inner shadow-black/10 dark:bg-slate-800/80 dark:text-amber-300">
                 Queue {queuedTasks.length + (activeTask ? 1 : 0)}/5
               </div>
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-400">
               SharpFlow is not a task dump. It is a pressure-free space for the next actionable step you can complete now.
             </p>
           </div>
@@ -82,10 +82,10 @@ export function FocusScreen() {
               <>
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Current task</p>
-                    <h2 className="mt-2 text-2xl font-semibold text-white">{activeTask.title}</h2>
-                  </div>
-                  <span className="rounded-full bg-slate-800/80 px-3 py-1 text-xs uppercase tracking-[0.35em] text-slate-300">
+                  <p className="text-xs uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">Current task</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{activeTask.title}</h2>
+                </div>
+                <span className="rounded-full bg-slate-200 px-3 py-1 text-xs uppercase tracking-[0.35em] text-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
                     {activeTask.timerMinutes} min
                   </span>
                 </div>
@@ -119,7 +119,7 @@ export function FocusScreen() {
                       window.setTimeout(() => setBurning(false), 2200)
                       setResetKey((value) => value + 1)
                     }}
-                    className="rounded-3xl bg-slate-800 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-slate-700"
+                    className="rounded-3xl bg-slate-400 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
                   >
                     Skip
                   </button>
@@ -136,16 +136,16 @@ export function FocusScreen() {
                   </button>
                 </div>
 
-                <p className="mt-4 text-sm leading-6 text-slate-400">
+                <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-400">
                   {activeTask.extensions > 0
                     ? `${activeTask.extensions} extension${activeTask.extensions > 1 ? 's' : ''} used.`
                     : 'Keep extensions rare. This is about action, not delay.'}
                 </p>
               </>
             ) : (
-              <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/80 p-6 text-center text-slate-400">
-                <p className="text-sm uppercase tracking-[0.35em] text-slate-500">No active task</p>
-                <p className="mt-3 text-lg font-medium text-white">Add one clear next step to start your focus cycle.</p>
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-100 p-6 text-center text-slate-600 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400">
+                <p className="text-sm uppercase tracking-[0.35em] text-slate-500 dark:text-slate-500">No active task</p>
+                <p className="mt-3 text-lg font-medium text-slate-900 dark:text-white">Add one clear next step to start your focus cycle.</p>
               </div>
             )}
           </div>

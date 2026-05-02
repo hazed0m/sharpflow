@@ -94,7 +94,7 @@ export function AuthGate({ children }: AuthGateProps) {
   if (!userEmail && supabase && !isGuestMode) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-100">
-        <div className="mx-auto max-w-3xl rounded-[2rem] border border-slate-200/20 bg-white/95 p-8 shadow-glow ring-1 ring-slate-200/30 dark:border-white/10 dark:bg-slate-900/90">
+        <div className="mx-auto max-w-6xl rounded-[2rem] border border-slate-200/20 bg-white/95 p-8 shadow-glow ring-1 ring-slate-200/30 dark:border-white/10 dark:bg-slate-900/90">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-3xl font-semibold text-slate-950 dark:text-white">Sign in to SharpFlow</h1>
@@ -142,7 +142,13 @@ export function AuthGate({ children }: AuthGateProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mb-6 flex flex-col gap-3 rounded-[2rem] border border-slate-200/20 bg-white/95 p-4 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 dark:ring-white/10 sm:flex-row sm:items-center sm:justify-between">
+      {isOfflineMode ? (
+        <div className="mx-auto max-w-6xl rounded-[2rem] border border-amber-300/20 bg-amber-400/10 p-4 text-sm text-amber-500 shadow-lg shadow-amber-300/10 mb-6">
+          <p className="font-medium">Offline mode enabled</p>
+          <p className="mt-1 text-slate-500">Supabase is not configured, so your progress is saved locally in the browser for prototyping.</p>
+        </div>
+      ) : null}
+      <div className="mx-auto max-w-6xl mb-6 flex flex-col gap-3 rounded-[2rem] border border-slate-200/20 bg-white/95 p-4 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 dark:ring-white/10 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-slate-600 dark:text-slate-400">
           {userEmail ? `Signed in as ${userEmail}` : 'Guest mode active'}
         </div>
@@ -159,7 +165,7 @@ export function AuthGate({ children }: AuthGateProps) {
           ) : null}
         </div>
       </div>
-      <header className="mb-8 rounded-[2rem] border border-slate-200/20 bg-white/95 p-6 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 sm:p-8">
+      <header className="mx-auto max-w-6xl mb-8 rounded-[2rem] border border-slate-200/20 bg-white/95 p-6 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-amber-500/80">SharpFlow</p>
@@ -170,13 +176,9 @@ export function AuthGate({ children }: AuthGateProps) {
           </div>
         </div>
       </header>
-      {isOfflineMode ? (
-        <div className="mx-auto mb-8 max-w-6xl rounded-[2rem] border border-amber-300/20 bg-amber-300/10 p-4 text-sm text-amber-100 shadow-lg shadow-amber-300/10">
-          <p className="font-medium">Offline mode enabled</p>
-          <p className="mt-1 text-slate-300">Supabase is not configured, so your progress is saved locally in the browser for prototyping.</p>
-        </div>
-      ) : null}
-      {children}
+      <div className="mx-auto max-w-6xl">
+        {children}
+      </div>
     </div>
   )
 }

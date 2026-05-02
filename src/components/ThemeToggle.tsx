@@ -33,7 +33,7 @@ export function ThemeToggle() {
 
       <span className="relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full bg-white shadow-inner transition-colors duration-300 dark:bg-slate-800">
         <span
-          className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-slate-950 shadow transition-transform duration-300 dark:bg-white ${
+          className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-amber-400 shadow transition-transform duration-300 dark:bg-white ${
             theme === 'dark' ? 'translate-x-5' : 'translate-x-0'
           }`}
         />

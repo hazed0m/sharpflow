@@ -39,7 +39,7 @@ export function TaskInput({ onSubmit, disabled }: TaskInputProps) {
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="rounded-3xl border border-slate-200/20 bg-white/95 p-4 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-950/90 dark:ring-white/10">
-        <label htmlFor="task-input" className="block text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+        <label htmlFor="task-input" className="block text-sm font-semibold uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
           Next actionable step
         </label>
         <textarea
@@ -53,11 +53,11 @@ export function TaskInput({ onSubmit, disabled }: TaskInputProps) {
             resizeTextarea()
           }}
           placeholder="Example: open the project file and review the first section"
-          className="mt-3 min-h-[100px] w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 ease-in-out focus:border-amber-400/70 focus:ring-2 focus:ring-amber-400/10"
+          className="mt-3 min-h-[100px] w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all duration-200 ease-in-out placeholder:text-slate-400 focus:border-amber-400/70 focus:ring-2 focus:ring-amber-400/10 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-amber-400/70 dark:focus:ring-amber-400/10"
         />
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="min-h-[1.5rem] text-sm text-slate-400">
+        <p className="min-h-[1.5rem] text-sm text-slate-600 dark:text-slate-400">
           {feedback || 'Keep it simple and start with the very next thing you can do.'}
         </p>
         <button

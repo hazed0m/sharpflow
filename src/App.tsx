@@ -7,7 +7,7 @@ import { ModuleSelector } from './components/ModuleSelector'
 function App() {
   return (
     <AuthGate>
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 py-6">
         <ModuleSelector />
         <AnalyticsSummary />
         <FocusScreen />

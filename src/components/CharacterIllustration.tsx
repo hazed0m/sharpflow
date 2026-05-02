@@ -27,7 +27,7 @@ export function CharacterIllustration({ mood, message }: CharacterIllustrationPr
         <span className="text-2xl">{moodState.expression}</span>
         <span>{moodState.label}</span>
       </div>
-      <p className="text-sm leading-6 text-slate-300">{message}</p>
+      <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{message}</p>
     </motion.div>
   )
 }

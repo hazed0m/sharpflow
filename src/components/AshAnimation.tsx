@@ -15,7 +15,7 @@ export function AshAnimation({ visible }: AshAnimationProps) {
           transition={{ duration: 0.35 }}
           className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex w-full max-w-xl justify-center"
         >
-          <div className="rounded-full border border-rose-400/20 bg-rose-500/10 px-4 py-2 text-sm text-rose-100 shadow-lg shadow-rose-500/20 backdrop-blur-sm">
+          <div className="rounded-full border border-rose-300 bg-rose-100 px-4 py-2 text-sm text-rose-800 shadow-lg shadow-rose-200/50 backdrop-blur-sm dark:border-rose-400/20 dark:bg-rose-500/10 dark:text-rose-100 dark:shadow-rose-500/20">
             💨 Task burned. Ashes are tracked here to help you learn faster.
           </div>
         </motion.div>
