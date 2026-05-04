@@ -17,10 +17,26 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --verbose
 
       - name: Build
         run: npm run build
+
+      - name: Show environment & diagnostics
+        run: |
+          echo "--- node/npm ---"
+          node -v || true
+          npm -v || true
+          echo "--- tsc/vite ---"
+          npx tsc -v || true
+          npx vite --version || true
+          echo "--- npm config ---"
+          npm config ls
+          echo "--- env (filtered) ---"
+          printenv | sort | grep -E "NODE|NPM|GITHUB|CI|RUNNER|ACTIONS|SUPABASE" || true
+          echo "--- disk / ls ---"
+          df -h || true
+          ls -la
 
       - name: Install Supabase CLI
         run: npm install -g supabase
