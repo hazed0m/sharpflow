@@ -50,6 +50,37 @@ For future persistence, you can add these tables:
 
 If Supabase is not configured, the app continues in local mode using browser storage.
 
+## CI/CD: GitHub Actions deploy to Supabase
+
+This repo includes a GitHub Actions workflow that builds the site, pushes DB migrations, deploys the MCP function, and uploads the built site to Supabase Hosting on pushes to `main` or `master`.
+
+Required repository secrets:
+- `SUPABASE_ACCESS_TOKEN` — a personal access token (create from your Supabase account).
+- `SUPABASE_PROJECT_REF` — your project reference (visible in the Supabase project URL).
+
+The workflow file is at `.github/workflows/supabase-deploy.yml`.
+
+Manual deploy commands (local):
+
+```bash
+# login and link
+supabase login
+supabase link --project-ref your-project-ref
+
+# push DB migrations (runs supabase/migrations/*.sql)
+supabase db push
+
+# deploy functions
+supabase functions deploy mcp --no-verify-jwt
+
+# deploy static site (built output)
+supabase hosting deploy ./build --project-ref your-project-ref
+```
+
+Notes:
+- Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables in Supabase Hosting (or embed via build pipeline using repo secrets).
+- For server-side operations that must bypass RLS, store and use the `service_role` key as a secret and call from Functions only.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
