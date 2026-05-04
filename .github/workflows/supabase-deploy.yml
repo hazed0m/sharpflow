@@ -39,8 +39,7 @@ jobs:
           ls -la
 
       - name: Install Supabase CLI
-        run: npm install -g supabase
-
+        run: npm install supabase
       - name: Link Supabase project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

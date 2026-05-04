@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Supabase CLI
-        run: npm install -g supabase
+        run: npm install supabase
 
       - name: Login to Supabase
         run: supabase login --token $SUPABASE_ACCESS_TOKEN
