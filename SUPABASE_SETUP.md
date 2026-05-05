@@ -114,10 +114,47 @@ If you want to support "Sign in with Google":
 
 ✅ Auth flows (email + Google login)  
 ✅ Logout button (visible after login)  
-✅ Database schema (tasks, memories tables)  
-✅ Row-level security (RLS policies)  
+✅ Database schema (tasks, memories tables) — **deployed ✓**  
+✅ Row-level security (RLS policies) — **verified ✓**  
 ✅ Auth state persistence  
 ✅ Type-safe Supabase client  
+✅ Project linked to Supabase: `wuggucdwlannodhuukvf`  
+
+## Google OAuth Setup (do this now)
+
+To enable "Sign in with Google", configure the provider in your Supabase dashboard:
+
+### Step 1: Create a Google Cloud OAuth 2.0 client
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create a new project (or select existing)
+3. Go to **APIs & Services → OAuth consent screen**
+   - Choose "External" user type
+   - Add your email as a test user
+   - Add scopes: `.../auth/userinfo.email`, `.../auth/userinfo.profile`
+4. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**
+   - Application type: **Web application**
+   - Name: "SharpFlow" (or any name)
+   - **Authorized redirect URIs** — add:
+     - `http://localhost:5173` (development)
+     - `https://wuggucdwlannodhuukvf.supabase.co/auth/v1/callback`
+   - Click **Create**
+5. Copy the **Client ID** and **Client Secret**
+
+### Step 2: Configure in Supabase Dashboard
+
+1. Go to your [Supabase Project Dashboard](https://supabase.com/dashboard/project/wuggucdwlannodhuukvf)
+2. Navigate to **Authentication → Providers**
+3. Find **Google** and toggle it **Enabled**
+4. Paste your **Client ID** and **Client Secret**
+5. Click **Save**
+
+### Step 3: Test
+
+1. Start your dev server: `npm run dev`
+2. Open `http://localhost:5173`
+3. Click **Sign in with Google**
+4. You should be redirected to Google, then back to your app logged in
 
 ## Database Schema
 
