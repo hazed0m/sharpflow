@@ -24,10 +24,14 @@ export async function signInWithEmail(email: string) {
 
 export async function signInWithGoogle() {
   if (!supabase) return { error: new Error('Supabase is not configured') }
+  
+  // Use production redirect URI from environment for consistent OAuth flow
+  const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || window.location.origin
+  
   return supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: redirectUri,
     },
   })
 }

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { supabase, getCurrentSession, onAuthStateChange, signInWithEmail, signInWithGoogle, signOut } from '../../services/supabase'
 import { useHasMounted } from '../../hooks/useHasMounted'
 import { useSharpFlowStore } from '../../store/useSharpFlowStore'
@@ -10,6 +10,7 @@ interface AuthGateProps {
 
 export function AuthGate({ children }: AuthGateProps) {
   const hasMounted = useHasMounted()
+  // Start with loading state, but will transition to ready after mount or timeout
   const [status, setStatus] = useState<'loading' | 'ready' | 'offline'>('loading')
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [email, setEmail] = useState('')
@@ -19,37 +20,74 @@ export function AuthGate({ children }: AuthGateProps) {
 
   const isOfflineMode = !supabase
 
+  // Use ref to store current session without triggering re-renders
+  const currentSessionRef = useRef<Awaited<ReturnType<typeof getCurrentSession>> | null>(null)
+
   useEffect(() => {
-    if (!hasMounted) return
-    if (isOfflineMode) {
-      setStatus('ready')
-      return
+    if (!isOfflineMode) {
+      (async () => {
+        try {
+          currentSessionRef.current = await getCurrentSession()
+        } catch {
+          // Ignore errors - will be handled by auth state listener
+        }
+      })()
     }
 
-    setStatus('loading')
-    getCurrentSession().then((result) => {
-      const user = result.data.session?.user
-      setUserEmail(user?.email ?? null)
-      if (user?.id) {
-        setIsGuestMode(false)
-        void initializeUser(user.id)
-      }
-      setStatus('ready')
-    })
-
-    const unsubscribe = onAuthStateChange((_, session) => {
-      const user = session?.user
-      setUserEmail(user?.email ?? null)
-      if (user?.id) {
-        setIsGuestMode(false)
-        void initializeUser(user.id)
-      } else {
-        void initializeUser(null)
-      }
+    const unsubscribe = onAuthStateChange(async (_event, session) => {
+      // Debounce auth state changes to avoid rapid updates during redirect
+      setTimeout(() => {
+        setUserEmail(session?.user?.email ?? null)
+        if (session?.user?.id) {
+          setIsGuestMode(false)
+          void initializeUser(session.user.id)
+        } else {
+          // Session ended - only update if not already in guest mode or loading
+          if (!isGuestMode && status === 'ready') {
+            setUserEmail(null)
+            void initializeUser(null)
+          }
+        }
+      }, 500)
     })
 
     return unsubscribe
-  }, [hasMounted, isOfflineMode, initializeUser])
+  }, [hasMounted, isOfflineMode])
+
+  // Restore state from pre-loaded session in a separate effect
+  useEffect(() => {
+    if (!isOfflineMode && currentSessionRef.current?.data.session?.user?.id) {
+      setUserEmail(currentSessionRef.current.data.session.user.email ?? null)
+      setIsGuestMode(false)
+      void initializeUser(currentSessionRef.current.data.session.user.id)
+    } else if (
+      !currentSessionRef.current?.data.session?.user?.email && 
+      !isGuestMode && 
+      status === 'ready'
+    ) {
+      // No session - show login screen
+      setUserEmail(null)
+      void initializeUser(null)
+    }
+
+    // Transition to ready state after mount or timeout - prevents stuck loading screen
+    if (hasMounted && !isOfflineMode) {
+      const timer = setTimeout(() => void setStatus('ready'), 100)
+      return () => clearTimeout(timer)
+    } else if (!hasMounted) {
+      // Clean up on unmount - prevent memory leaks and stuck states
+      if (status === 'loading') {
+        void setStatus('ready')
+      }
+    }
+
+    return () => {
+      // Cleanup function for the component
+      if (status === 'loading') {
+        void setStatus('ready')
+      }
+    }
+  }, [isOfflineMode, isGuestMode, status])
 
   const handleEmailSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -75,6 +113,13 @@ export function AuthGate({ children }: AuthGateProps) {
   const handleGuestMode = () => {
     setIsGuestMode(true)
     setStatus('ready')
+  }
+
+  const handleExitGuestMode = () => {
+    // Clear guest mode state and show login screen again
+    setIsGuestMode(false)
+    setUserEmail(null)
+    void initializeUser(null)
   }
 
   if (!hasMounted) {
@@ -154,7 +199,8 @@ export function AuthGate({ children }: AuthGateProps) {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          {supabase ? (
+          {/* Sign out button - always shown when user is signed in */}
+          {supabase && userEmail && (
             <button
               type="button"
               onClick={handleSignOut}
@@ -162,7 +208,17 @@ export function AuthGate({ children }: AuthGateProps) {
             >
               Sign out
             </button>
-          ) : null}
+          )}
+          {/* Exit Guest Mode button - only shown in guest mode */}
+          {isGuestMode && (
+            <button
+              type="button"
+              onClick={handleExitGuestMode}
+              className="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 shadow-lg shadow-emerald-500/20"
+            >
+              Exit Guest Mode
+            </button>
+          )}
         </div>
       </div>
       <header className="mx-auto max-w-6xl mb-8 rounded-[2rem] border border-slate-200/20 bg-white/95 p-6 shadow-glow ring-1 ring-slate-200/30 transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/90 sm:p-8">
