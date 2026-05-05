@@ -7,7 +7,10 @@ import {
 } from '../services/supabase'
 import type { MemoryEntry, TaskItem, CharacterMood } from '../types'
 
-const STORAGE_KEY = 'sharpflow-state-v1'
+// Separate storage keys for different user types to prevent data mixing:
+// - OAuth users: use their userId as part of the key (e.g., 'sharpflow-oauth-abc123')
+// - Guests: use a shared guest key since they don't have persistent IDs
+const GUEST_STORAGE_KEY = 'sharpflow-guest-state-v1'
 
 interface SharpFlowState {
   tasks: TaskItem[]
@@ -18,6 +21,7 @@ interface SharpFlowState {
   activeTaskId: string | null
   selectedModuleId: string
   userId: string | null
+  guestId: string | null // Unique ID for guest sessions - generated once per browser session
   initializeUser: (userId: string | null) => Promise<void>
   addTask: (title: string) => void
   completeTask: () => void
@@ -28,6 +32,47 @@ interface SharpFlowState {
   setMood: (mood: CharacterMood) => void
   setPrompt: (prompt: string) => void
   setSelectedModule: (moduleId: string) => void
+}
+
+// Generate a unique guest ID if not already set (persisted across page reloads)
+const generateGuestId = (): string => {
+  let savedState: Partial<SharpFlowState> | null = null
+  
+  try {
+    const saved = window.localStorage.getItem(GUEST_STORAGE_KEY)
+    if (saved) {
+      savedState = JSON.parse(saved) as Partial<SharpFlowState>
+    }
+  } catch {
+    // Parse error - start fresh
+  }
+
+  if (!savedState?.guestId) {
+    const newGuestId = crypto.randomUUID()
+    
+    try {
+      window.localStorage.setItem(
+        GUEST_STORAGE_KEY,
+        JSON.stringify({
+          tasks: [],
+          memories: [],
+          ash: [],
+          mood: 'calm',
+          prompt: 'Start with one focused task that feels clear.',
+          activeTaskId: null,
+          selectedModuleId: 'classic',
+          userId: null,
+          guestId: newGuestId,
+        })
+      )
+    } catch {
+      // Storage full or unavailable - still return the ID for local use
+    }
+    
+    return newGuestId
+  }
+
+  return savedState.guestId ?? crypto.randomUUID()
 }
 
 const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt' | 'setSelectedModule'>> => {
@@ -41,10 +86,12 @@ const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initia
       activeTaskId: null,
       selectedModuleId: 'classic',
       userId: null,
+      guestId: generateGuestId(), // Generate if no saved state
     }
   }
 
-  const saved = window.localStorage.getItem(STORAGE_KEY)
+  const saved = window.localStorage.getItem(GUEST_STORAGE_KEY)
+  
   if (!saved) {
     return {
       tasks: [],
@@ -55,6 +102,7 @@ const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initia
       activeTaskId: null,
       selectedModuleId: 'classic',
       userId: null,
+      guestId: generateGuestId(), // Generate if no saved state
     }
   }
 
@@ -63,7 +111,8 @@ const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initia
     return {
       ...parsed,
       selectedModuleId: (parsed as { selectedModuleId?: string }).selectedModuleId ?? 'classic',
-      userId: null,
+      userId: null, // Always reset on load - will be set by initializeUser
+      guestId: generateGuestId(), // Regenerate if not in saved state (shouldn't happen)
     }
   } catch {
     return {
@@ -75,21 +124,33 @@ const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initia
       activeTaskId: null,
       selectedModuleId: 'classic',
       userId: null,
+      guestId: generateGuestId(), // Generate on error
     }
   }
-}
-
-function saveState(state: Omit<SharpFlowState, 'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt' | 'setSelectedModule' | 'userId'>) {
-  if (typeof window === 'undefined') return
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
 }
 
 export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
   const baseState = hydrateState()
 
-  const save = () => {
-    const { tasks, memories, ash, mood, prompt, activeTaskId, selectedModuleId } = get()
-    saveState({ tasks, memories, ash, mood, prompt, activeTaskId, selectedModuleId })
+const save = () => {
+    // Don't save userId or guestId - they're handled separately:
+    const userId = get().userId
+    if (userId === null) return // Guests don't sync to localStorage with user-specific keys
+    
+    const currentState = get()
+    
+    // Don't save userId or guestId - they're handled separately:
+    const storageKey = `sharpflow-oauth-${userId}`
+    
+    const stateWithoutIds = { 
+      ...currentState, 
+      userId: null, 
+      guestId: null 
+    } as Omit<
+      SharpFlowState,
+      'initializeUser' | 'addTask' | 'completeTask' | 'skipTask' | 'extendTask' | 'burnActiveTask' | 'addMemory' | 'setMood' | 'setPrompt' | 'setSelectedModule' | 'userId' | 'guestId'
+    >
+    window.localStorage.setItem(storageKey, JSON.stringify(stateWithoutIds))
   }
 
   return {
@@ -97,8 +158,9 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
     userId: null,
     async initializeUser(userId) {
       set(() => ({ userId }))
+      
       if (!userId) return
-
+      
       const localState = get()
       const [tasksResult, memoriesResult] = await Promise.all([
         fetchUserTasks(userId),
@@ -131,18 +193,21 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
         const activeTask = remoteTasks.find((task) => task.status === 'active')
         const nextPending = remoteTasks.find((task) => task.status === 'pending')
         set({ tasks: remoteTasks, activeTaskId: activeTask?.id ?? nextPending?.id ?? null })
-      } else if (localState.tasks.length > 0) {
+      } else if (localState.tasks.length > 0 && userId) {
+        // Only sync to database when there's a real user ID (OAuth)
         await Promise.all(localState.tasks.map((task) => upsertTask(task, userId)))
       }
 
       if (remoteMemories.length > 0) {
         set({ memories: remoteMemories })
-      } else if (localState.memories.length > 0) {
+      } else if (localState.memories.length > 0 && userId) {
+        // Only sync to database when there's a real user ID (OAuth)
         await Promise.all(localState.memories.map((memory) => upsertMemory(memory, userId)))
       }
 
       save()
     },
+    
     addTask(title) {
       const nextTask: TaskItem = {
         id: crypto.randomUUID(),
@@ -170,11 +235,15 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
         }
       })
       save()
+      
+      // Only sync to Supabase for OAuth users with a real user_id
+      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId) {
         void upsertTask(nextTask, userId)
       }
     },
+    
     completeTask() {
       const updatedTasks: TaskItem[] = get().tasks.map((task) =>
         task.id === get().activeTaskId ? { ...task, status: 'completed' as TaskItem['status'] } : task,
@@ -192,11 +261,15 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
         }
       })
       save()
+      
+      // Only sync to Supabase for OAuth users with a real user_id
+      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId && completedTask) {
         void upsertTask(completedTask, userId)
       }
     },
+    
     skipTask() {
       const updatedTasks: TaskItem[] = get().tasks.map((task) =>
         task.id === get().activeTaskId ? { ...task, status: 'ash' as TaskItem['status'] } : task,
@@ -218,11 +291,15 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
         }
       })
       save()
+      
+      // Only sync to Supabase for OAuth users with a real user_id
+      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId && skippedTask) {
         void upsertTask(skippedTask, userId)
       }
     },
+    
     extendTask() {
       const activeTask = get().tasks.find((task) => task.id === get().activeTaskId)
       if (!activeTask || activeTask.extensions >= 2) {
@@ -239,17 +316,21 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
 
       set(() => ({ tasks: updatedTasks, prompt: 'Extra 5 minutes granted. Keep the next step tight.' }))
       save()
+      
+      // Only sync to Supabase for OAuth users with a real user_id
+      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId && extendedTask) {
         void upsertTask(extendedTask, userId)
       }
     },
+    
     burnActiveTask() {
       const updatedTasks: TaskItem[] = get().tasks.map((task) =>
         task.id === get().activeTaskId ? { ...task, status: 'ash' as TaskItem['status'] } : task,
       )
-      const burnedTask = updatedTasks.find((task) => task.id === get().activeTaskId)
-      const ashTask = get().tasks.find((task) => task.id === get().activeTaskId && task.status === 'active')
+      const burnedTask = updatedTasks.find((task) => task.id === get().activeTaskId && task.status === 'active')
+      const ashTask = get().tasks.find((task) => task.id === get().activeTaskId && task.status === 'ash')
       const nextPending = get().tasks.find((task) => task.status === 'pending')
 
       set(() => ({
@@ -260,11 +341,15 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
         prompt: 'The timer ended. Let the next attempt be sharper.',
       }))
       save()
+      
+      // Only sync to Supabase for OAuth users with a real user_id
+      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId && burnedTask) {
         void upsertTask(burnedTask, userId)
       }
     },
+    
     addMemory(text, type) {
       const newMemory: MemoryEntry = {
         id: crypto.randomUUID(),
@@ -278,20 +363,26 @@ export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
         prompt: 'Memory saved. Reflecting is part of building momentum.',
       }))
       save()
+      
+      // Only sync to Supabase for OAuth users with a real user_id
+      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId) {
         void upsertMemory(newMemory, userId)
       }
     },
+    
     setMood(mood) {
       set(() => ({ mood }))
       save()
     },
+    
     setPrompt(prompt) {
       set(() => ({ prompt }))
       save()
     },
-    setSelectedModule(moduleId) {
+    
+    setSelectedModule(moduleId: string) {
       const modulePrompt = moduleId === 'quick-start'
         ? 'Choose a task you can begin in the next minute.'
         : moduleId === 'recovery'
