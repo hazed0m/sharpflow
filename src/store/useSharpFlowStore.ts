@@ -10,8 +10,19 @@ import type { MemoryEntry, TaskItem, CharacterMood } from '../types'
 // Separate storage keys for different user types to prevent data mixing:
 // - OAuth users: use their userId as part of the key (e.g., 'sharpflow-oauth-abc123')
 // - Guests: use a shared guest key since they don't have persistent IDs
-const GUEST_STORAGE_KEY = 'sharpflow-guest-state-v1'
+export const GUEST_STORAGE_KEY = 'sharpflow-guest-state-v1'
 
+// Offline buffer for OAuth users - stores pending changes when offline or after logout
+interface OfflineBuffer {
+  tasks: TaskItem[]
+  memories: MemoryEntry[]
+  ash: TaskItem[]
+  lastSyncedAt?: number // Timestamp of last successful sync to Supabase
+}
+
+export const OFFLINE_BUFFER_KEY = (userId: string) => `sharpflow-oauth-${userId}-buffer`
+
+// Add lastSyncedAt to SharpFlowState interface
 interface SharpFlowState {
   tasks: TaskItem[]
   memories: MemoryEntry[]
@@ -21,6 +32,7 @@ interface SharpFlowState {
   activeTaskId: string | null
   selectedModuleId: string
   userId: string | null
+  lastSyncedAt?: number // Timestamp of last successful sync to Supabase
   guestId: string | null // Unique ID for guest sessions - generated once per browser session
   initializeUser: (userId: string | null) => Promise<void>
   addTask: (title: string) => void
@@ -132,14 +144,12 @@ const hydrateState = (): Omit<SharpFlowState, keyof Pick<SharpFlowState, 'initia
 export const useSharpFlowStore = create<SharpFlowState>((set, get) => {
   const baseState = hydrateState()
 
-const save = () => {
-    // Don't save userId or guestId - they're handled separately:
+  // Save to localStorage for OAuth users - don't save userId or guestId
+  const save = () => {
     const userId = get().userId
     if (userId === null) return // Guests don't sync to localStorage with user-specific keys
     
     const currentState = get()
-    
-    // Don't save userId or guestId - they're handled separately:
     const storageKey = `sharpflow-oauth-${userId}`
     
     const stateWithoutIds = { 
@@ -153,9 +163,29 @@ const save = () => {
     window.localStorage.setItem(storageKey, JSON.stringify(stateWithoutIds))
   }
 
+  // Save offline buffer for OAuth users - stores pending changes when offline or after logout
+  const saveOfflineBuffer = (userId: string | null) => {
+    if (!userId) return
+    
+    const currentState = get()
+    const buffer: OfflineBuffer = {
+      tasks: currentState.tasks,
+      memories: currentState.memories,
+      ash: currentState.ash,
+      lastSyncedAt: currentState.lastSyncedAt ?? Date.now(),
+    }
+    
+    try {
+      window.localStorage.setItem(OFFLINE_BUFFER_KEY(userId), JSON.stringify(buffer))
+    } catch (e) {
+      console.warn('Failed to save offline buffer:', e)
+    }
+  }
+
   return {
     ...baseState,
     userId: null,
+    
     async initializeUser(userId) {
       set(() => ({ userId }))
       
@@ -167,7 +197,26 @@ const save = () => {
         fetchUserMemories(userId),
       ])
 
+      // If database fetch fails, load from offline buffer as fallback
       if (tasksResult.error || memoriesResult.error) {
+        try {
+          const savedBuffer = window.localStorage.getItem(OFFLINE_BUFFER_KEY(userId))
+          if (savedBuffer) {
+            const buffer: OfflineBuffer = JSON.parse(savedBuffer)
+            console.log('Loaded tasks from offline buffer:', buffer.tasks.length)
+            
+            // Merge remote data with local state, prioritizing remote but keeping local changes
+            const mergedTasks: TaskItem[] = [...(localState.tasks ?? []), ...buffer.tasks]
+              .filter((task, taskIndex) => !mergedTasks.some((existing, existingIndex) => 
+                existing.id === task.id && existingIndex !== taskIndex
+              ))
+            
+            set({ tasks: mergedTasks })
+          }
+        } catch (e) {
+          console.warn('Failed to load offline buffer:', e)
+        }
+        
         return
       }
 
@@ -206,6 +255,16 @@ const save = () => {
       }
 
       save()
+      
+      // Save to offline buffer first before clearing remote data
+      saveOfflineBuffer(userId)
+      
+      // Clear offline buffer after successful sync
+      try {
+        window.localStorage.removeItem(OFFLINE_BUFFER_KEY(userId))
+      } catch (e) {
+        console.warn('Failed to clear offline buffer:', e)
+      }
     },
     
     addTask(title) {
@@ -236,8 +295,10 @@ const save = () => {
       })
       save()
       
+      // Save to offline buffer first (works for both guests and OAuth users)
+      saveOfflineBuffer(get().userId)
+      
       // Only sync to Supabase for OAuth users with a real user_id
-      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId) {
         void upsertTask(nextTask, userId)
@@ -262,8 +323,10 @@ const save = () => {
       })
       save()
       
+      // Save to offline buffer first (works for both guests and OAuth users)
+      saveOfflineBuffer(get().userId)
+      
       // Only sync to Supabase for OAuth users with a real user_id
-      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId && completedTask) {
         void upsertTask(completedTask, userId)
@@ -292,8 +355,10 @@ const save = () => {
       })
       save()
       
+      // Save to offline buffer first (works for both guests and OAuth users)
+      saveOfflineBuffer(get().userId)
+      
       // Only sync to Supabase for OAuth users with a real user_id
-      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId && skippedTask) {
         void upsertTask(skippedTask, userId)
@@ -317,8 +382,10 @@ const save = () => {
       set(() => ({ tasks: updatedTasks, prompt: 'Extra 5 minutes granted. Keep the next step tight.' }))
       save()
       
+      // Save to offline buffer first (works for both guests and OAuth users)
+      saveOfflineBuffer(get().userId)
+      
       // Only sync to Supabase for OAuth users with a real user_id
-      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId && extendedTask) {
         void upsertTask(extendedTask, userId)
@@ -342,8 +409,10 @@ const save = () => {
       }))
       save()
       
+      // Save to offline buffer first (works for both guests and OAuth users)
+      saveOfflineBuffer(get().userId)
+      
       // Only sync to Supabase for OAuth users with a real user_id
-      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId && burnedTask) {
         void upsertTask(burnedTask, userId)
@@ -364,8 +433,10 @@ const save = () => {
       }))
       save()
       
+      // Save to offline buffer first (works for both guests and OAuth users)
+      saveOfflineBuffer(get().userId)
+      
       // Only sync to Supabase for OAuth users with a real user_id
-      // Guests use localStorage only - no Supabase writes
       const userId = get().userId
       if (userId) {
         void upsertMemory(newMemory, userId)
@@ -393,6 +464,9 @@ const save = () => {
 
       set(() => ({ selectedModuleId: moduleId, prompt: modulePrompt, mood }))
       save()
+      
+      // Save to offline buffer first (works for both guests and OAuth users)
+      saveOfflineBuffer(get().userId)
     },
   }
 })
