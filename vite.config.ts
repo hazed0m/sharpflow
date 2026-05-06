@@ -4,6 +4,9 @@ import babel from '@rolldown/plugin-babel'
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 500 * 1024, // 500KB warning threshold
+  },
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] })
