@@ -11,8 +11,46 @@
       content="SharpFlow is a behavior-driven focus app that turns messy thoughts into one clear, urgent next step."
     />
   </head>
-  <body>
+  <body class="bg-slate-50 dark:bg-black">
     <div id="root"></div>
+
+    <!-- Theme initialization script -->
+    <script type="module">
+      (async () => {
+        // Set initial theme from localStorage, system preference, or default to light
+        const savedTheme = localStorage.getItem('sharpflow-theme') || null
+        
+        if (!savedTheme) {
+          // No local storage - check system preference
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          localStorage.setItem('sharpflow-theme', prefersDark ? 'dark' : 'light')
+        }
+
+        // Apply theme to HTML element
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark')
+          document.documentElement.style.colorScheme = 'dark'
+        } else {
+          document.documentElement.classList.remove('dark')
+          document.documentElement.style.colorScheme = 'light'
+        }
+
+        // Listen for system theme changes on supported browsers (Chrome, Safari, etc.)
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            const newTheme = e.matches ? 'dark' : 'light'
+            
+            // Only auto-update if user hasn't manually overridden with localStorage
+            if (!localStorage.getItem('sharpflow-theme')) {
+              document.documentElement.classList.toggle('dark', e.matches)
+              document.documentElement.style.colorScheme = e.matches ? 'dark' : 'light'
+            }
+          })
+        }
+
+        console.log(`SharpFlow theme initialized: ${savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')}`)
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

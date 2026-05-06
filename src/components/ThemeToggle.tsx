@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 const STORAGE_KEY = 'sharpflow-theme'
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark')
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const prefersDark = useCallback(() => window.matchMedia('(prefers-color-scheme: dark)').matches, [])
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(STORAGE_KEY) as 'light' | 'dark' | null
-    const initialTheme = savedTheme ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    const initialTheme = savedTheme ?? (prefersDark() ? 'dark' : 'light')
     setTheme(initialTheme)
     document.documentElement.classList.toggle('dark', initialTheme === 'dark')
-  }, [])
+  }, [prefersDark])
+
+  // Device preference readout state
+  const devicePrefDisplay = prefersDark() ? '💾 Your device prefers dark mode' : '💾 Your device prefers light mode'
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark'
@@ -25,6 +29,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       aria-pressed={theme === 'dark'}
       className="inline-flex items-center gap-3 rounded-full bg-slate-200 p-1 text-sm font-semibold text-slate-900 shadow-lg shadow-slate-900/10 ring-1 ring-slate-300/40 transition duration-300 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:shadow-black/20 dark:ring-slate-700/40 dark:hover:bg-slate-600"
+      title={`${devicePrefDisplay} | Currently using ${theme === 'dark' ? 'Dark' : 'Light'} theme`}
     >
       <span className="flex items-center gap-2">
         <span className="text-base">{theme === 'dark' ? '🌙' : '☀️'}</span>
